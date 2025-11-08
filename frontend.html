@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多晶圆外层管理系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 14px;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #1890ff;
+        }
+        
+        .operation-bar {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .folder-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #folder-path {
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            min-width: 300px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: #1890ff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #40a9ff;
+        }
+        
+        .btn-default {
+            background-color: #fff;
+            color: #333;
+            border: 1px solid #d9d9d9;
+        }
+        
+        .btn-default:hover {
+            border-color: #40a9ff;
+            color: #40a9ff;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .main-content {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .wafer-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .wafer-table th {
+            background-color: #fafafa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .wafer-table td {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .wafer-table tr:hover {
+            background-color: #fafafa;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        
+        .status-success {
+            background-color: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }
+        
+        .status-error {
+            background-color: #fff1f0;
+            color: #ff4d4f;
+            border: 1px solid #ffccc7;
+        }
+        
+        .status-warning {
+            background-color: #fffbe6;
+            color: #faad14;
+            border: 1px solid #ffe58f;
+        }
+        
+        .status-info {
+            background-color: #e6f7ff;
+            color: #1890ff;
+            border: 1px solid #91d5ff;
+        }
+        
+        .progress-bar {
+            width: 100px;
+            height: 8px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            overflow: hidden;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #1890ff;
+            transition: width 0.3s;
+        }
+        
+        .progress-text {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .operation-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn-small {
+            padding: 4px 12px;
+            font-size: 12px;
+        }
+        
+        .footer {
+            margin-top: 20px;
+            padding: 16px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: right;
+            color: #666;
+        }
+        
+        .checkbox-cell {
+            text-align: center;
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted #999;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 4px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px;
+            color: #999;
+        }
+        
+        .empty-state img {
+            width: 120px;
+            opacity: 0.5;
+            margin-bottom: 20px;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .modal {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            min-width: 400px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .modal-header {
+            padding-bottom: 16px;
+            border-bottom: 1px solid #f0f0f0;
+            margin-bottom: 16px;
+        }
+        
+        .modal-footer {
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
+            margin-top: 16px;
+            text-align: right;
+        }
+        
+        .modal-footer .btn {
+            margin-left: 8px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px;
+            border-radius: 4px;
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 2000;
+            transform: translateX(150%);
+            transition: transform 0.3s;
+            max-width: 300px;
+        }
+        
+        .notification-show {
+            transform: translateX(0);
+        }
+        
+        .notification-success {
+            border-left: 4px solid #52c41a;
+        }
+        
+        .notification-error {
+            border-left: 4px solid #ff4d4f;
+        }
+        
+        .notification-info {
+            border-left: 4px solid #1890ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 顶部操作区 -->
+        <div class="header">
+            <h1>多晶圆外层管理系统</h1>
+            <div class="operation-bar">
+                <div class="folder-selector">
+                    <span>选择根目录：</span>
+                    <input type="text" id="folder-path" readonly placeholder="请选择晶圆文件夹根目录">
+                    <button class="btn btn-primary" onclick="selectFolder()">选择目录</button>
+                    <input type="file" id="folder-input" webkitdirectory directory style="display: none;">
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" id="recursive-search" checked>
+                    <label for="recursive-search">递归搜索</label>
+                </div>
+                <button class="btn btn-primary" onclick="loadFolders()">应用</button>
+                <button class="btn btn-default" onclick="batchExport()">批量导出KFL</button>
+                <button class="btn btn-default" onclick="refreshList()">刷新列表</button>
+            </div>
+        </div>
+        
+        <!-- 主要内容区 -->
+        <div class="main-content">
+            <div class="loading" id="loading">
+                <p>正在加载晶圆数据...</p>
+            </div>
+            
+            <div class="empty-state" id="empty-state">
+                <p>暂无晶圆数据，请选择目录并点击应用</p>
+            </div>
+            
+            <table class="wafer-table" id="wafer-table">
+                <thead>
+                    <tr>
+                        <th style="width: 40px;"><input type="checkbox" id="select-all"></th>
+                        <th>晶圆名称</th>
+                        <th>解析状态</th>
+                        <th>标注状态</th>
+                        <th>标注进度</th>
+                        <th>缺陷统计</th>
+                        <th>最后操作时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="wafer-list">
+                    <!-- 晶圆列表将通过JavaScript动态生成 -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 底部状态栏 -->
+        <div class="footer">
+            <span id="status-summary">共0个 · 0个已解析 · 0个标注完成</span>
+        </div>
+    </div>
+    
+    <!-- 导出确认弹窗 -->
+    <div class="overlay" id="export-modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>导出确认</h3>
+            </div>
+            <div class="modal-body">
+                <p id="export-modal-message">该晶圆已100%标注，是否导出全部缺陷？</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-default" onclick="closeExportModal(false)">仅导出已标注</button>
+                <button class="btn btn-primary" onclick="closeExportModal(true)">导出全部</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 通知组件 -->
+    <div class="notification" id="notification">
+        <p id="notification-message"></p>
+    </div>
+    
+    <script>
+        // 全局变量
+        let currentExportWaferId = null;
+        
+        // 初始化
+        window.onload = function() {
+            // 绑定全选复选框事件
+            document.getElementById('select-all').addEventListener('change', function() {
+                const isChecked = this.checked;
+                document.querySelectorAll('input[name="wafer-select"]').forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                });
+            });
+            
+            // 初始加载晶圆列表
+            refreshList();
+        };
+        
+        // 选择文件夹
+        function selectFolder() {
+            document.getElementById('folder-input').click();
+        }
+        
+        document.getElementById('folder-input').addEventListener('change', function() {
+            if (this.files.length > 0) {
+                const folder = this.files[0];
+                document.getElementById('folder-path').value = folder.webkitRelativePath.split('/')[0];
+            }
+        });
+        
+        // 加载文件夹
+        function loadFolders() {
+            const folderPath = document.getElementById('folder-path').value;
+            const recursive = document.getElementById('recursive-search').checked;
+            
+            if (!folderPath) {
+                showNotification('请先选择根目录', 'error');
+                return;
+            }
+            
+            showLoading(true);
+            
+            // 调用API加载文件夹
+            fetch('/api/load_folders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'load_folders',
+                    params: {
+                        root_dir: folderPath,
+                        recursive: recursive
+                    }
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoading(false);
+                refreshList();
+                
+                if (data.total_processed > 0) {
+                    showNotification(
+                        `成功加载 ${data.success} 个晶圆，失败 ${data.failed} 个`,
+                        data.failed > 0 ? 'warning' : 'success'
+                    );
+                } else {
+                    showNotification('未找到有效的晶圆文件夹', 'info');
+                }
+            })
+            .catch(error => {
+                showLoading(false);
+                showNotification('加载失败：' + error.message, 'error');
+            });
+        }
+        
+        // 刷新晶圆列表
+        function refreshList() {
+            showLoading(true);
+            
+            fetch('/api/get_wafer_list', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'get_wafer_list',
+                    params: {}
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoading(false);
+                renderWaferList(data);
+                updateStatusSummary(data);
+            })
+            .catch(error => {
+                showLoading(false);
+                showNotification('刷新失败：' + error.message, 'error');
+            });
+        }
+        
+        // 渲染晶圆列表
+        function renderWaferList(wafers) {
+            const waferList = document.getElementById('wafer-list');
+            waferList.innerHTML = '';
+            
+            const emptyState = document.getElementById('empty-state');
+            const waferTable = document.getElementById('wafer-table');
+            
+            if (!wafers || wafers.length === 0) {
+                emptyState.style.display = 'block';
+                waferTable.style.display = 'none';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            waferTable.style.display = 'table';
+            
+            wafers.forEach(wafer => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="checkbox-cell">
+                        <input type="checkbox" name="wafer-select" value="${wafer.wafer_id}">
+                    </td>
+                    <td>${wafer.wafer_name}</td>
+                    <td>${renderParseStatus(wafer.parsed_status, wafer.parse_error)}</td>
+                    <td>${renderLabelStatus(wafer.label_status)}</td>
+                    <td>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${wafer.progress}%"></div>
+                        </div>
+                        <span class="progress-text">${wafer.progress.toFixed(2)}%</span>
+                    </td>
+                    <td>${wafer.labeled_defects}/${wafer.total_defects}</td>
+                    <td>${formatDateTime(wafer.last_operated)}</td>
+                    <td>
+                        <div class="operation-buttons">
+                            <button class="btn btn-small btn-primary" 
+                                    onclick="enterLabeling('${wafer.wafer_id}')">进入标注</button>
+                            <button class="btn btn-small btn-default" 
+                                    onclick="exportKFL('${wafer.wafer_id}', ${wafer.label_status})">单独导出</button>
+                            <button class="btn btn-small btn-default" 
+                                    onclick="showDistribution('${wafer.wafer_id}')">查看分布图</button>
+                        </div>
+                    </td>
+                `;
+                waferList.appendChild(row);
+            });
+        }
+        
+        // 渲染解析状态
+        function renderParseStatus(status, errorMsg) {
+            const statusMap = {
+                0: { text: '未解析', className: 'status-warning' },
+                1: { text: '成功', className: 'status-success' },
+                2: { text: '失败', className: 'status-error' }
+            };
+            
+            const info = statusMap[status] || { text: '未知', className: 'status-info' };
+            
+            if (status === 2 && errorMsg) {
+                return `<div class="tooltip">
+                            <span class="status-badge ${info.className}">${info.text}</span>
+                            <span class="tooltiptext">${errorMsg}</span>
+                        </div>`;
+            }
+            
+            return `<span class="status-badge ${info.className}">${info.text}</span>`;
+        }
+        
+        // 渲染标注状态
+        function renderLabelStatus(status) {
+            const statusMap = {
+                0: { text: '未开始', className: '' },
+                1: { text: '标注中', className: 'status-info' },
+                2: { text: '标注完成', className: 'status-success' }
+            };
+            
+            const info = statusMap[status] || { text: '未知', className: '' };
+            
+            if (info.className) {
+                return `<span class="status-badge ${info.className}">${info.text}</span>`;
+            }
+            
+            return info.text;
+        }
+        
+        // 格式化日期时间
+        function formatDateTime(timestamp) {
+            if (!timestamp) return '-';
+            
+            const date = new Date(timestamp);
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+        
+        // 更新状态栏
+        function updateStatusSummary(wafers) {
+            if (!wafers || wafers.length === 0) {
+                document.getElementById('status-summary').textContent = '共0个 · 0个已解析 · 0个标注完成';
+                return;
+            }
+            
+            const total = wafers.length;
+            const parsed = wafers.filter(w => w.parsed_status === 1).length;
+            const completed = wafers.filter(w => w.label_status === 2).length;
+            
+            document.getElementById('status-summary').textContent = 
+                `共${total}个 · ${parsed}个已解析 · ${completed}个标注完成`;
+        }
+        
+        // 进入标注
+        function enterLabeling(waferId) {
+            showLoading(true);
+            
+            // 调用API进入内层标注
+            fetch('/api/enter_inner_layer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'enter_inner_layer',
+                    params: {
+                        wafer_id: waferId
+                    }
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoading(false);
+                
+                if (data.success) {
+                    showNotification('正在打开内层标注页...', 'success');
+                    
+                    // 检查是否有redirect_url，如果有则跳转
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                    }
+                } else {
+                    showNotification('进入内层标注失败：' + (data.error || '未知错误'), 'error');
+                }
+            })
+            .catch(error => {
+                showLoading(false);
+                showNotification('进入内层标注失败：' + error.message, 'error');
+            });
+        }
+        
+        // 导出KFL
+        function exportKFL(waferId, labelStatus) {
+            if (labelStatus === 2) {
+                // 100%标注完成，显示确认弹窗
+                currentExportWaferId = waferId;
+                document.getElementById('export-modal-overlay').style.display = 'flex';
+            } else {
+                // 非100%标注，直接导出已标注缺陷
+                doExportKFL(waferId, false);
+            }
+        }
+        
+        // 执行导出
+        function doExportKFL(waferId, exportAll) {
+            showLoading(true);
+            
+            fetch('/api/export_kfl', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'export_kfl',
+                    params: {
+                        wafer_id: waferId,
+                        export_all: exportAll
+                    }
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoading(false);
+                
+                if (data.success) {
+                    showNotification('导出成功！', 'success');
+                    // 这里应该触发文件下载
+                    // 由于是演示，这里仅显示提示
+                } else {
+                    showNotification('导出失败：' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showLoading(false);
+                showNotification('导出失败：' + error.message, 'error');
+            });
+        }
+        
+        // 关闭导出弹窗
+        function closeExportModal(exportAll) {
+            document.getElementById('export-modal-overlay').style.display = 'none';
+            
+            if (currentExportWaferId) {
+                doExportKFL(currentExportWaferId, exportAll);
+                currentExportWaferId = null;
+            }
+        }
+        
+        // 批量导出
+        function batchExport() {
+            const selectedWafers = Array.from(
+                document.querySelectorAll('input[name="wafer-select"]:checked')
+            ).map(checkbox => checkbox.value);
+            
+            if (selectedWafers.length === 0) {
+                showNotification('请至少选择一个晶圆', 'info');
+                return;
+            }
+            
+            showLoading(true);
+            
+            fetch('/api/batch_export_kfl', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'batch_export_kfl',
+                    params: {
+                        wafer_ids: selectedWafers
+                    }
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoading(false);
+                
+                if (data.success) {
+                    showNotification(`成功导出 ${selectedWafers.length} 个晶圆的数据！`, 'success');
+                    // 这里应该触发ZIP文件下载
+                } else {
+                    showNotification('批量导出失败：' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showLoading(false);
+                showNotification('批量导出失败：' + error.message, 'error');
+            });
+        }
+        
+        // 查看分布图
+        function showDistribution(waferId) {
+            // 这里应该显示缺陷分布图
+            showNotification('正在加载缺陷分布图...', 'info');
+        }
+        
+        // 同步进度
+        function syncProgress(waferId) {
+            fetch('/api/sync_progress', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    action: 'sync_progress',
+                    params: {
+                        wafer_id: waferId
+                    }
+                })
+            })
+            .then(() => refreshList())
+            .catch(error => console.error('同步进度失败:', error));
+        }
+        
+        // 显示加载状态
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+        
+        // 显示通知
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            const notificationMessage = document.getElementById('notification-message');
+            
+            notification.className = `notification notification-${type}`;
+            notificationMessage.textContent = message;
+            
+            // 显示通知
+            notification.classList.add('notification-show');
+            
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                notification.classList.remove('notification-show');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
